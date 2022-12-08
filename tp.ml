@@ -9,7 +9,6 @@ type b_expression =
   | True
   | False
   | Variable of string
-  | Constant of bool
   | And of b_expression * b_expression
   | Opposite of b_expression
   | Inf of b_expression * b_expression
@@ -21,21 +20,24 @@ type command =
   | Skip (* ne rien faire *)
   | Sequence of command * command (* c1 ; c2 *)
   | Condition  of b_expression * command * command (* if b then c1 else c2 *)
-  | Loop of b_expression * command ;; (* while b do c *)
+  | Loop of b_expression * command (* while b do c *)
+;;
 
-let com evalC= function
-  | Affectation (x,a) -> x:=a
-  | Skip -> ()
-  | Sequence (c1,c2) -> c1 ; c2 
-  | Condition (a,c1,c2) -> if(b = True) then evalC c1 else evalC c2
+let rec com evalC= function 
+  | Sequence (c1,c2) -> evalC c1 ; evalC c2 
+  | Condition (b,c1,c2) -> if(b = True) then evalC c1 else evalC c2
   | Loop (b,c) -> while b=True do evalC c done
+  | Affectation (x,a) -> ()
+  | Skip -> ()
 ;;
 
-let ca evalA = function 
-  | Equal (e1,e2) -> if(evalA e1 = evalA e2)then true else false 
+let rec ca evalA = function 
+  | Addition (a, b) -> evalA a + evalA b
+  | Opposite (a) -> -1 * evalA a
+  | Equal (e1,e2) -> if(evalA e1 = evalA e2) then 1 else 0 
 ;;
 
-let cb evalB = function
+let rec cb evalB = function
   | True -> true
   | False -> false
   | And (False, _) | And (_, False) -> false
@@ -46,7 +48,7 @@ let cb evalB = function
           (*| Equal ((e1 : a_expression) ,(e2 : a_expression)) ->  if(evalA e1 = evalA e2)then true else false*)
 ;;
 
-let com =
+let com1 =
   let z = True in 
   let x = 3 in 
   let y = 1 in
